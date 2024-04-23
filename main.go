@@ -7,8 +7,6 @@ import (
 	"syscall"
 
 	"github.com/EmanuelPutura/distributed_algo/admin"
-	"github.com/EmanuelPutura/distributed_algo/network"
-	"github.com/EmanuelPutura/distributed_algo/protobuf"
 )
 
 const HUB_IP = "127.0.0.1"
@@ -26,27 +24,8 @@ func main() {
 		return
 	}
 
-	network_messages := make(chan *protobuf.Message, 4096)
-
-	network.TcpListen(PROC_IP, PROC_PORT, func(data []byte) {
-		message, err := admin.ParseNetworkMessage(data)
-		if err != nil {
-			return
-		}
-
-		network_messages <- message
-	})
-
-	go func() {
-		for message := range network_messages {
-			fmt.Printf("Received message: %s", message)
-			switch message.NetworkMessage.Message.Type {
-			case protobuf.Message_PROC_DESTROY_SYSTEM:
-			case protobuf.Message_PROC_INITIALIZE_SYSTEM:
-			default:
-			}
-		}
-	}()
+	var message_listener *admin.MessageListener = admin.Create(PROC_IP, PROC_PORT)
+	message_listener.Start()
 
 	exit_channel := make(chan os.Signal, 1)
 	signal.Notify(exit_channel, syscall.SIGINT, syscall.SIGTERM)
