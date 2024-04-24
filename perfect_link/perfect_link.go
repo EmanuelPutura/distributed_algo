@@ -58,16 +58,25 @@ func (pl PerfectLink) Copy() *PerfectLink {
 	return &copy_pl
 }
 
+func (pl *PerfectLink) getTcpSendRecvAddress(message *protobuf.Message) (string, int32) {
+	if message.PlSend.Destination != nil {
+		return message.PlSend.Destination.Host, message.PlSend.Destination.Port
+	}
+
+	return pl.recv_ip, pl.recv_port
+}
+
 func (pl *PerfectLink) Send(message *protobuf.Message) error {
 	var wrapped_message protobuf.Message = getWrappedMessage(message, pl.sender_ip, pl.sender_port, pl.system_id)
-
 	data, err := proto.Marshal(&wrapped_message)
 	if err != nil {
 		return err
 	}
 
 	data = addHeaderToMessageBytes(data)
-	return network.TcpSend(pl.recv_ip, pl.recv_port, data)
+
+	recv_ip, recv_port := pl.getTcpSendRecvAddress(message)
+	return network.TcpSend(recv_ip, recv_port, data)
 }
 
 func (pl *PerfectLink) findSenderProcesse(message *protobuf.Message) *protobuf.ProcessId {
@@ -94,7 +103,7 @@ func (pl *PerfectLink) getReadyToDeliverMessage(message *protobuf.Message, sende
 }
 
 func (pl *PerfectLink) HandleMessage(message *protobuf.Message) error {
-	fmt.Printf("PL received message: %s\n\n", message)
+	fmt.Printf("PL handles message:\n%s\n\n", message)
 	switch message.Type {
 	case protobuf.Message_NETWORK_MESSAGE:
 		sender_process := pl.findSenderProcesse(message)

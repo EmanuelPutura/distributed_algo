@@ -4,19 +4,21 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EmanuelPutura/distributed_algo/abstraction"
 	"github.com/EmanuelPutura/distributed_algo/app"
+	"github.com/EmanuelPutura/distributed_algo/beb"
 	perfectlink "github.com/EmanuelPutura/distributed_algo/perfect_link"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 )
 
 type System struct {
-	id              string
-	hub_ip          string
-	hub_port        int32
-	messages_queue  chan *protobuf.Message
-	parent_process  *protobuf.ProcessId
-	child_processes []*protobuf.ProcessId
-	abstractions    map[string]Abstraction
+	id             string
+	hub_ip         string
+	hub_port       int32
+	messages_queue chan *protobuf.Message
+	parent_process *protobuf.ProcessId
+	all_processes  []*protobuf.ProcessId
+	abstractions   map[string]abstraction.Abstraction
 }
 
 func Create(message *protobuf.Message, hub_ip string, hub_port int32, owner string, index int32) *System {
@@ -29,13 +31,13 @@ func Create(message *protobuf.Message, hub_ip string, hub_port int32, owner stri
 	}
 
 	return &System{
-		id:              message.SystemId,
-		hub_ip:          hub_ip,
-		hub_port:        hub_port,
-		messages_queue:  make(chan *protobuf.Message, 4096),
-		parent_process:  parent_process,
-		child_processes: message.ProcInitializeSystem.Processes,
-		abstractions:    make(map[string]Abstraction),
+		id:             message.SystemId,
+		hub_ip:         hub_ip,
+		hub_port:       hub_port,
+		messages_queue: make(chan *protobuf.Message, 4096),
+		parent_process: parent_process,
+		all_processes:  message.ProcInitializeSystem.Processes,
+		abstractions:   make(map[string]abstraction.Abstraction),
 	}
 }
 
@@ -53,7 +55,7 @@ func (system *System) Enqueue(message *protobuf.Message) {
 
 type AbstractionWithName struct {
 	name        string
-	abstraction Abstraction
+	abstraction abstraction.Abstraction
 }
 
 func (system *System) createInitialAbstractions() []AbstractionWithName {
@@ -62,17 +64,19 @@ func (system *System) createInitialAbstractions() []AbstractionWithName {
 		system.parent_process.Port,
 		system.hub_ip,
 		system.hub_port,
-	).SetSystemId(system.id).SetSystemMessagesQueue(system.messages_queue).SetSystemProcesses(system.child_processes)
+	).SetSystemId(system.id).SetSystemMessagesQueue(system.messages_queue).SetSystemProcesses(system.all_processes)
 
 	abstractions := []AbstractionWithName{
 		{"app", app.Create(system.messages_queue)},
 		{"app.pl", link.Copy().SetParentAbstraction("app")},
+		{"app.beb", beb.Create("app.beb", system.messages_queue, system.all_processes)},
+		{"app.beb.pl", link.Copy().SetParentAbstraction("app.beb")},
 	}
 
 	return abstractions
 }
 
-func (system *System) register(abstraction *Abstraction, key string) {
+func (system *System) register(abstraction *abstraction.Abstraction, key string) {
 	system.abstractions[key] = *abstraction
 }
 
@@ -88,7 +92,7 @@ func (system *System) Init() *System {
 func (system *System) Start() {
 	for {
 		for message := range system.messages_queue {
-			fmt.Printf("System handles message: %s\n\n", message)
+			fmt.Printf("System handles message:\n%s\n\n", message)
 
 			abstraction, exists := system.abstractions[message.ToAbstractionId]
 
@@ -96,6 +100,7 @@ func (system *System) Start() {
 				// TODO
 				err := errors.New("abstraction is not yet supported")
 				fmt.Println(err)
+				continue
 			}
 
 			err := abstraction.HandleMessage(message)

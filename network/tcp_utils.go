@@ -31,8 +31,10 @@ func TcpListen(ip string, port int32, handler NetworkTrafficHandler) {
 	var network_address string = getNetworkAddress(ip, port)
 
 	go func(handler NetworkTrafficHandler) {
+
 		listener, err := net.Listen("tcp", network_address)
 		if err != nil {
+			fmt.Println(err)
 			return
 		}
 
