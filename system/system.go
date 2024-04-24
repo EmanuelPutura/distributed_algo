@@ -7,6 +7,7 @@ import (
 	"github.com/EmanuelPutura/distributed_algo/abstraction"
 	"github.com/EmanuelPutura/distributed_algo/app"
 	"github.com/EmanuelPutura/distributed_algo/beb"
+	dlog "github.com/EmanuelPutura/distributed_algo/log"
 	perfectlink "github.com/EmanuelPutura/distributed_algo/perfect_link"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 )
@@ -92,7 +93,8 @@ func (system *System) Init() *System {
 func (system *System) Start() {
 	for {
 		for message := range system.messages_queue {
-			fmt.Printf("System handles message:\n%s\n\n", message)
+			// fmt.Printf("System handles message:\n%s\n\n", message)
+			dlog.Dlog.Printf("System handles message: %s\n\n", message)
 
 			abstraction, exists := system.abstractions[message.ToAbstractionId]
 

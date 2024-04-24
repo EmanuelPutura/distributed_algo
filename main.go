@@ -8,6 +8,7 @@ import (
 	"syscall"
 
 	"github.com/EmanuelPutura/distributed_algo/admin"
+	dlog "github.com/EmanuelPutura/distributed_algo/log"
 )
 
 func main() {
@@ -19,6 +20,7 @@ func main() {
 	index := flag.Int("index", 1, "The index of the process")
 
 	flag.Parse()
+	dlog.Init()
 
 	var err error = admin.RegisterProcess(*hub_ip, int32(*hub_port), *proc_ip, int32(*proc_port), *owner, int32(*index))
 	if err != nil {

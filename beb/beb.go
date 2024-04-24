@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	dlog "github.com/EmanuelPutura/distributed_algo/log"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 )
 
@@ -52,7 +53,9 @@ func (beb *BestEffortBroadcast) handleMessagePlDeliver(message *protobuf.Message
 }
 
 func (beb *BestEffortBroadcast) HandleMessage(message *protobuf.Message) error {
-	fmt.Printf("BEB handles message:\n%s\n\n", message)
+	// fmt.Printf("BEB handles message:\n%s\n\n", message)
+	dlog.Dlog.Printf("BEB handles message:\n%s\n\n", message)
+
 	switch message.Type {
 	case protobuf.Message_BEB_BROADCAST:
 		beb.handleMessageBebBroadcast(message)

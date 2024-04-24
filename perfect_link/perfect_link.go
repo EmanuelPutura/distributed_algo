@@ -2,8 +2,8 @@ package perfectlink
 
 import (
 	"errors"
-	"fmt"
 
+	dlog "github.com/EmanuelPutura/distributed_algo/log"
 	"github.com/EmanuelPutura/distributed_algo/network"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 	"google.golang.org/protobuf/proto"
@@ -103,7 +103,9 @@ func (pl *PerfectLink) getReadyToDeliverMessage(message *protobuf.Message, sende
 }
 
 func (pl *PerfectLink) HandleMessage(message *protobuf.Message) error {
-	fmt.Printf("PL handles message:\n%s\n\n", message)
+	// fmt.Printf("PL handles message:\n%s\n\n", message)
+	dlog.Dlog.Printf("PL handles message:\n%s\n\n", message)
+
 	switch message.Type {
 	case protobuf.Message_NETWORK_MESSAGE:
 		sender_process := pl.findSenderProcesse(message)

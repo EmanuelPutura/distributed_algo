@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	dlog "github.com/EmanuelPutura/distributed_algo/log"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 )
 
@@ -43,7 +44,8 @@ func (app *App) handlePerfectLinkLayerDeliver(message *protobuf.Message) *protob
 }
 
 func (app *App) handleBebLayerDeliver(message *protobuf.Message) *protobuf.Message {
-	fmt.Printf("Received value from broadcast: %d\n\n", message.BebDeliver.Message.AppValue.Value.V)
+	// fmt.Printf("Received value from broadcast: %d\n\n", message.BebDeliver.Message.AppValue.Value.V)
+	dlog.Dlog.Printf("Received value from broadcast: %d\n\n", message.BebDeliver.Message.AppValue.Value.V)
 
 	return &protobuf.Message{
 		Type:              protobuf.Message_PL_SEND,
@@ -60,7 +62,8 @@ func (app *App) handleBebLayerDeliver(message *protobuf.Message) *protobuf.Messa
 
 func (app *App) HandleMessage(message *protobuf.Message) error {
 	var queued_message *protobuf.Message = nil
-	fmt.Printf("App handles message:\n%s\n\n", message)
+	// fmt.Printf("App handles message:\n%s\n\n", message)
+	dlog.Dlog.Printf("App handles message:\n'%s'\n\n", message)
 
 	switch message.Type {
 	case protobuf.Message_PL_DELIVER:
