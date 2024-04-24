@@ -1,9 +1,7 @@
 package admin
 
 import (
-	"encoding/binary"
-
-	"github.com/EmanuelPutura/distributed_algo/network"
+	perfectlink "github.com/EmanuelPutura/distributed_algo/perfect_link"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 	"google.golang.org/protobuf/proto"
 )
@@ -18,30 +16,10 @@ func getProcRegistrationMessage(owner string, index int32) protobuf.Message {
 	}
 }
 
-func getWrappedMessage(message *protobuf.Message, sender_host string, sender_listening_port int32) protobuf.Message {
-	return protobuf.Message{
-		SystemId:        "",
-		ToAbstractionId: message.ToAbstractionId,
-		Type:            protobuf.Message_NETWORK_MESSAGE,
-		NetworkMessage: &protobuf.NetworkMessage{
-			Message: message.PlSend.Message,
-			/* Message:             message.NetworkMessage.Message, */
-			SenderHost:          sender_host,
-			SenderListeningPort: sender_listening_port,
-		},
-	}
-}
-
-func addHeaderToMessageBytes(data []byte) []byte {
-	var bytes []byte = make([]byte, 4)
-	binary.BigEndian.PutUint32(bytes, uint32(len(data)))
-	return append(bytes, data...)
-}
-
 func RegisterProcess(hub_ip string, hub_port int32, proc_ip string, proc_port int32, owner string, index int32) error {
 	var proc_registration_message protobuf.Message = getProcRegistrationMessage(owner, index)
 
-	var send_msg protobuf.Message = protobuf.Message{
+	var pl_send_message protobuf.Message = protobuf.Message{
 		Type: protobuf.Message_PL_SEND,
 		PlSend: &protobuf.PlSend{
 			Destination: &protobuf.ProcessId{
@@ -63,17 +41,8 @@ func RegisterProcess(hub_ip string, hub_port int32, proc_ip string, proc_port in
 		}
 	*/
 
-	var register_msg protobuf.Message = getWrappedMessage(&send_msg, proc_ip, proc_port)
-
-	data, err := proto.Marshal(&register_msg)
-	if err != nil {
-		return err
-	}
-
-	data = addHeaderToMessageBytes(data)
-	err = network.TcpSend(hub_ip, hub_port, data)
-
-	return err
+	var link *perfectlink.PerfectLink = perfectlink.Create(proc_ip, proc_port, hub_ip, hub_port)
+	return link.Send(&pl_send_message)
 }
 
 func ParseNetworkMessage(data []byte) (*protobuf.Message, error) {
