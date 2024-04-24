@@ -25,7 +25,7 @@ func main() {
 	}
 
 	var message_listener *admin.MessageListener = admin.Create(PROC_IP, PROC_PORT)
-	message_listener.Start()
+	message_listener.Start(HUB_IP, HUB_PORT, OWNER, INDEX)
 
 	exit_channel := make(chan os.Signal, 1)
 	signal.Notify(exit_channel, syscall.SIGINT, syscall.SIGTERM)

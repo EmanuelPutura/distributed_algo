@@ -2,6 +2,7 @@ package perfectlink
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/EmanuelPutura/distributed_algo/network"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
@@ -9,11 +10,14 @@ import (
 )
 
 type PerfectLink struct {
-	sender_ip   string
-	sender_port int32
-	recv_ip     string
-	recv_port   int32
-	system_id   string
+	sender_ip             string
+	sender_port           int32
+	recv_ip               string
+	recv_port             int32
+	system_id             string
+	parent_abstraction    string
+	system_messages_queue chan *protobuf.Message
+	system_processes      []*protobuf.ProcessId
 }
 
 func Create(sender_ip string, sender_port int32, recv_ip string, recv_port int32) *PerfectLink {
@@ -23,6 +27,35 @@ func Create(sender_ip string, sender_port int32, recv_ip string, recv_port int32
 		recv_ip:     recv_ip,
 		recv_port:   recv_port,
 	}
+}
+
+func (pl *PerfectLink) Destroy() {
+
+}
+
+func (pl *PerfectLink) SetSystemId(system_id string) *PerfectLink {
+	pl.system_id = system_id
+	return pl
+}
+
+func (pl *PerfectLink) SetSystemMessagesQueue(queue chan *protobuf.Message) *PerfectLink {
+	pl.system_messages_queue = queue
+	return pl
+}
+
+func (pl *PerfectLink) SetSystemProcesses(processes []*protobuf.ProcessId) *PerfectLink {
+	pl.system_processes = processes
+	return pl
+}
+
+func (pl *PerfectLink) SetParentAbstraction(parent_abstraction string) *PerfectLink {
+	pl.parent_abstraction = parent_abstraction
+	return pl
+}
+
+func (pl PerfectLink) Copy() *PerfectLink {
+	copy_pl := pl
+	return &copy_pl
 }
 
 func (pl *PerfectLink) Send(message *protobuf.Message) error {
@@ -37,10 +70,38 @@ func (pl *PerfectLink) Send(message *protobuf.Message) error {
 	return network.TcpSend(pl.recv_ip, pl.recv_port, data)
 }
 
-func (pl *PerfectLink) Handle(message *protobuf.Message) error {
+func (pl *PerfectLink) findSenderProcesse(message *protobuf.Message) *protobuf.ProcessId {
+	for _, process := range pl.system_processes {
+		if process.Host == message.NetworkMessage.SenderHost && process.Port == message.NetworkMessage.SenderListeningPort {
+			return process
+		}
+	}
+
+	return nil
+}
+
+func (pl *PerfectLink) getReadyToDeliverMessage(message *protobuf.Message, sender_process *protobuf.ProcessId) *protobuf.Message {
+	return &protobuf.Message{
+		SystemId:          message.SystemId,
+		FromAbstractionId: message.ToAbstractionId,
+		ToAbstractionId:   pl.parent_abstraction,
+		Type:              protobuf.Message_PL_DELIVER,
+		PlDeliver: &protobuf.PlDeliver{
+			Sender:  sender_process,
+			Message: message.NetworkMessage.Message,
+		},
+	}
+}
+
+func (pl *PerfectLink) HandleMessage(message *protobuf.Message) error {
+	fmt.Printf("PL received message: %s\n\n", message)
 	switch message.Type {
 	case protobuf.Message_NETWORK_MESSAGE:
-
+		sender_process := pl.findSenderProcesse(message)
+		enqueued_message := pl.getReadyToDeliverMessage(message, sender_process)
+		pl.system_messages_queue <- enqueued_message
+	case protobuf.Message_PL_SEND:
+		pl.Send(message)
 	default:
 		return errors.New("invalid message: message is not supported for perfect links")
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/EmanuelPutura/distributed_algo/network"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
+	"github.com/EmanuelPutura/distributed_algo/system"
 )
 
 type MessageListener struct {
@@ -32,15 +33,34 @@ func (message_listener *MessageListener) listen() {
 	})
 }
 
-func (message_listener *MessageListener) Start() {
+func (message_listener *MessageListener) Start(hub_ip string, hub_port int32, owner string, index int32) {
 	message_listener.listen()
 	go func() {
-		for message := range message_listener.channel {
-			fmt.Printf("Received message: %s\n", message)
-			switch message.NetworkMessage.Message.Type {
-			case protobuf.Message_PROC_DESTROY_SYSTEM:
-			case protobuf.Message_PROC_INITIALIZE_SYSTEM:
-			default:
+		systems := make(map[string]*system.System)
+		for {
+			for message := range message_listener.channel {
+				fmt.Printf("Received message: %s\n", message)
+				switch message.NetworkMessage.Message.Type {
+				case protobuf.Message_PROC_DESTROY_SYSTEM:
+				case protobuf.Message_PROC_INITIALIZE_SYSTEM:
+					system := system.Create(
+						message.NetworkMessage.Message,
+						hub_ip,
+						hub_port,
+						owner,
+						index,
+					).Init()
+
+					go system.Start()
+					systems[message.SystemId] = system
+				default:
+					if system, exists := systems[message.SystemId]; exists {
+						system.Enqueue(message)
+					} else {
+						// TODO
+						fmt.Println("Error, system does not exist!")
+					}
+				}
 			}
 		}
 	}()
