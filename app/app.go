@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/EmanuelPutura/distributed_algo/helpers"
 	dlog "github.com/EmanuelPutura/distributed_algo/log"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 )
@@ -38,6 +39,34 @@ func (app *App) handlePerfectLinkLayerDeliver(message *protobuf.Message) *protob
 				},
 			},
 		}
+	case protobuf.Message_APP_VALUE:
+		return &protobuf.Message{
+			Type:              protobuf.Message_PL_SEND,
+			FromAbstractionId: "app",
+			ToAbstractionId:   "app.pl",
+			PlSend: &protobuf.PlSend{
+				Message: &protobuf.Message{
+					Type:     protobuf.Message_APP_VALUE,
+					AppValue: message.PlDeliver.Message.AppValue,
+				},
+			},
+		}
+	case protobuf.Message_APP_WRITE:
+		return &protobuf.Message{
+			Type:              protobuf.Message_NNAR_WRITE,
+			FromAbstractionId: "app",
+			ToAbstractionId:   fmt.Sprintf("app.nnar[%s]", message.PlDeliver.Message.AppWrite.Register),
+			NnarWrite: &protobuf.NnarWrite{
+				Value: message.PlDeliver.Message.AppWrite.Value,
+			},
+		}
+	case protobuf.Message_APP_READ:
+		return &protobuf.Message{
+			Type:              protobuf.Message_NNAR_READ,
+			FromAbstractionId: "app",
+			ToAbstractionId:   fmt.Sprintf("app.nnar[%s]", message.PlDeliver.Message.AppRead.Register),
+			NnarRead:          &protobuf.NnarRead{},
+		}
 	}
 
 	return nil
@@ -60,6 +89,39 @@ func (app *App) handleBebLayerDeliver(message *protobuf.Message) *protobuf.Messa
 	}
 }
 
+func (app *App) handleNnarLayerWriteReturn(message *protobuf.Message) *protobuf.Message {
+	return &protobuf.Message{
+		Type:              protobuf.Message_PL_SEND,
+		FromAbstractionId: "app",
+		ToAbstractionId:   "app.pl",
+		PlSend: &protobuf.PlSend{
+			Message: &protobuf.Message{
+				Type: protobuf.Message_APP_WRITE_RETURN,
+				AppWriteReturn: &protobuf.AppWriteReturn{
+					Register: helpers.RetrieveRegisterFromAbstraction(message.FromAbstractionId),
+				},
+			},
+		},
+	}
+}
+
+func (app *App) handleNnarLayerReadReturn(message *protobuf.Message) *protobuf.Message {
+	return &protobuf.Message{
+		Type:              protobuf.Message_PL_SEND,
+		FromAbstractionId: "app",
+		ToAbstractionId:   "app.pl",
+		PlSend: &protobuf.PlSend{
+			Message: &protobuf.Message{
+				Type: protobuf.Message_APP_READ_RETURN,
+				AppReadReturn: &protobuf.AppReadReturn{
+					Register: helpers.RetrieveRegisterFromAbstraction(message.FromAbstractionId),
+					Value:    message.NnarReadReturn.Value,
+				},
+			},
+		},
+	}
+}
+
 func (app *App) HandleMessage(message *protobuf.Message) error {
 	var queued_message *protobuf.Message = nil
 	// fmt.Printf("App handles message:\n%s\n\n", message)
@@ -70,6 +132,10 @@ func (app *App) HandleMessage(message *protobuf.Message) error {
 		queued_message = app.handlePerfectLinkLayerDeliver(message)
 	case protobuf.Message_BEB_DELIVER:
 		queued_message = app.handleBebLayerDeliver(message)
+	case protobuf.Message_NNAR_READ_RETURN:
+		queued_message = app.handleNnarLayerReadReturn(message)
+	case protobuf.Message_NNAR_WRITE_RETURN:
+		queued_message = app.handleNnarLayerWriteReturn(message)
 	default:
 		return errors.New("invalid app message type")
 	}

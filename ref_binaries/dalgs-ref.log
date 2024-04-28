@@ -1,11 +1,19 @@
-22:14:12.014 INF hub: Listening on 127.0.0.1:5000
-22:14:12.016 INF ref-3: listening on 127.0.0.1:5003
-22:14:12.016 INF ref-2: listening on 127.0.0.1:5002
-22:14:12.017 INF ref-1: listening on 127.0.0.1:5001
-22:14:12.026 INF hub: Received registration from ref-3
-22:14:12.026 INF hub: Received registration from ref-2
-22:14:12.026 INF hub: Received registration from ref-1
-22:37:09.288 INF hub: Received registration from emanuel-1
-22:37:22.427 INF hub: Received registration from emanuel-2
-22:37:39.402 INF hub: sys-1/emanuel-2 delivered 100
-22:37:39.402 INF hub: sys-1/emanuel-1 delivered 100
+11:55:38.221 INF hub: Listening on 127.0.0.1:5000
+11:55:38.223 INF ref-3: listening on 127.0.0.1:5003
+11:55:38.223 INF ref-1: listening on 127.0.0.1:5001
+11:55:38.223 INF ref-2: listening on 127.0.0.1:5002
+11:55:38.234 INF hub: Received registration from ref-1
+11:55:38.234 INF hub: Received registration from ref-2
+11:55:38.234 INF hub: Received registration from ref-3
+11:55:40.896 INF hub: Received registration from emanuel-1
+11:55:43.370 INF hub: Received registration from emanuel-2
+11:55:58.425 INF hub: sys-2/emanuel-1 read x=undefined
+11:56:02.227 INF hub: sys-2/emanuel-2 read x=undefined
+11:56:02.227 INF hub: sys-2/emanuel-1 read x=undefined
+11:56:06.577 INF hub: sys-2/emanuel-2 finished writing x
+11:56:08.141 INF hub: sys-2/emanuel-2 read x=89
+11:56:08.141 INF hub: sys-2/emanuel-1 read x=89
+11:56:12.637 INF ref-1: Stopping ...
+11:56:13.262 INF ref-2: Stopping ...
+11:56:14.263 INF ref-3: Stopping ...
+11:56:15.265 INF hub: Stopping ...

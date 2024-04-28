@@ -3,11 +3,14 @@ package system
 import (
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/EmanuelPutura/distributed_algo/abstraction"
 	"github.com/EmanuelPutura/distributed_algo/app"
 	"github.com/EmanuelPutura/distributed_algo/beb"
+	"github.com/EmanuelPutura/distributed_algo/helpers"
 	dlog "github.com/EmanuelPutura/distributed_algo/log"
+	"github.com/EmanuelPutura/distributed_algo/nnar"
 	perfectlink "github.com/EmanuelPutura/distributed_algo/perfect_link"
 	"github.com/EmanuelPutura/distributed_algo/protobuf"
 )
@@ -77,6 +80,30 @@ func (system *System) createInitialAbstractions() []AbstractionWithName {
 	return abstractions
 }
 
+func (system *System) createNnarAbstractions(key string) {
+	pl := perfectlink.Create(
+		system.parent_process.Host,
+		system.parent_process.Port,
+		system.hub_ip,
+		system.hub_port,
+	).SetSystemId(system.id).SetSystemMessagesQueue(system.messages_queue).SetSystemProcesses(system.all_processes)
+	nnar_base_id := "app.nnar[" + key + "]"
+
+	system.abstractions[nnar_base_id] = nnar.Create(
+		system.messages_queue,
+		int32(len(system.all_processes)),
+		key,
+		0,
+		system.parent_process.Rank,
+		-1,
+		make(map[int32]*protobuf.NnarInternalValue),
+	)
+
+	system.abstractions[nnar_base_id+".pl"] = pl.Copy().SetParentAbstraction(nnar_base_id)
+	system.abstractions[nnar_base_id+".beb"] = beb.Create(nnar_base_id+".beb", system.messages_queue, system.all_processes)
+	system.abstractions[nnar_base_id+".beb.pl"] = pl.Copy().SetParentAbstraction(nnar_base_id + ".beb")
+}
+
 func (system *System) register(abstraction *abstraction.Abstraction, key string) {
 	system.abstractions[key] = *abstraction
 }
@@ -96,18 +123,22 @@ func (system *System) Start() {
 			// fmt.Printf("System handles message:\n%s\n\n", message)
 			dlog.Dlog.Printf("System handles message: %s\n\n", message)
 
-			abstraction, exists := system.abstractions[message.ToAbstractionId]
+			_, exists := system.abstractions[message.ToAbstractionId]
 
 			if !exists {
-				// TODO
-				err := errors.New("abstraction is not yet supported")
+				if strings.HasPrefix(message.ToAbstractionId, "app.nnar") {
+					system.createNnarAbstractions(helpers.RetrieveRegisterFromAbstraction((message.ToAbstractionId)))
+				}
+			}
+
+			abstraction, exists := system.abstractions[message.ToAbstractionId]
+			if !exists {
+				err := errors.New("failed to handle message")
 				fmt.Println(err)
-				continue
 			}
 
 			err := abstraction.HandleMessage(message)
 			if err != nil {
-				// TODO
 				err := errors.New("failed to handle message")
 				fmt.Println(err)
 			}
@@ -118,5 +149,3 @@ func (system *System) Start() {
 func (system *System) HandleMessage(message *protobuf.Message) {
 	system.messages_queue <- message
 }
-
-// func (system *System) Add

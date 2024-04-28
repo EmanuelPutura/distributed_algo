@@ -42,6 +42,10 @@ func (message_listener *MessageListener) Start(hub_ip string, hub_port int32, ow
 				fmt.Printf("Received message: %s\n", message)
 				switch message.NetworkMessage.Message.Type {
 				case protobuf.Message_PROC_DESTROY_SYSTEM:
+					if system, exists := systems[message.SystemId]; exists {
+						system.Destroy()
+						system = nil
+					}
 				case protobuf.Message_PROC_INITIALIZE_SYSTEM:
 					system := system.Create(
 						message.NetworkMessage.Message,
@@ -57,7 +61,6 @@ func (message_listener *MessageListener) Start(hub_ip string, hub_port int32, ow
 					if system, exists := systems[message.SystemId]; exists {
 						system.Enqueue(message)
 					} else {
-						// TODO
 						fmt.Println("Error, system does not exist!")
 					}
 				}
