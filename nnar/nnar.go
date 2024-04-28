@@ -249,11 +249,12 @@ func (nnar *Nnar) getAbstractionId() string {
 	return "app.nnar[" + nnar.key + "]"
 }
 
+func (nnar *Nnar) getIsValueDefined() bool {
+	return nnar.value != -1
+}
+
 func (nnar *Nnar) buildNnarInternalValue() *protobuf.NnarInternalValue {
-	is_value_defined := false
-	if nnar.value != -1 {
-		is_value_defined = true
-	}
+	is_value_defined := nnar.getIsValueDefined()
 
 	return &protobuf.NnarInternalValue{
 		ReadId:    nnar.read_id,
@@ -290,21 +291,13 @@ func (nnar *Nnar) highestNnarInternalValue() *protobuf.NnarInternalValue {
 }
 
 func compareNnarInternalValues(value1 *protobuf.NnarInternalValue, value2 *protobuf.NnarInternalValue) int {
-	if value1.Timestamp > value2.Timestamp {
+	if value1.Timestamp > value2.Timestamp || (value1.Timestamp == value2.Timestamp && value1.WriterRank > value2.WriterRank) {
 		return 1
 	}
 
-	if value2.Timestamp > value1.Timestamp {
-		return -1
+	if value1.Timestamp == value2.Timestamp && value1.WriterRank == value2.WriterRank {
+		return 0
 	}
 
-	if value1.WriterRank > value2.WriterRank {
-		return 1
-	}
-
-	if value2.WriterRank > value1.WriterRank {
-		return -1
-	}
-
-	return 0
+	return -1
 }
