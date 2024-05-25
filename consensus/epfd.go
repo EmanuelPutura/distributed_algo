@@ -117,12 +117,37 @@ func (epfd *EventuallyPerfectFailureDetector) handleEpfdTimeout() {
 	StartTimer(epfd, epfd.delay)
 }
 
+func (epfd *EventuallyPerfectFailureDetector) handlePerfectLinkLayerPlDeliver(message *protobuf.Message) *protobuf.Message {
+	return &protobuf.Message{
+		Type:              protobuf.Message_PL_SEND,
+		FromAbstractionId: epfd.abstraction_id,
+		ToAbstractionId:   fmt.Sprintf("%s.pl", epfd.abstraction_id),
+		PlSend: &protobuf.PlSend{
+			Message: &protobuf.Message{
+				Type:                       protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REPLY,
+				FromAbstractionId:          epfd.abstraction_id,
+				ToAbstractionId:            epfd.abstraction_id,
+				EpfdInternalHeartbeatReply: &protobuf.EpfdInternalHeartbeatReply{},
+			},
+		},
+	}
+}
+
 func (epfd *EventuallyPerfectFailureDetector) HandleMessage(message *protobuf.Message) error {
 	dlog.Dlog.Printf("%-35s EPFD handles message:\n%s\n\n", "[EPFD]:", message)
 
 	switch message.Type {
-	case protobuf.Message_NETWORK_MESSAGE:
-	case protobuf.Message_PL_SEND:
+	case protobuf.Message_EPFD_TIMEOUT:
+		epfd.handleEpfdTimeout()
+	case protobuf.Message_PL_DELIVER:
+		switch message.PlDeliver.Message.Type {
+		case protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST:
+			epfd.messages_queue <- epfd.handlePerfectLinkLayerPlDeliver(message)
+		case protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REPLY:
+			epfd.alive_processes[helpers.GetProcessName(message.PlDeliver.Sender)] = message.PlDeliver.Sender
+		default:
+			return errors.New("Message not supported")
+		}
 	default:
 		return errors.New("invalid message: message is not supported for EPFD")
 	}
