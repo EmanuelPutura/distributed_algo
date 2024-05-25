@@ -1,4 +1,4 @@
-package consensus
+package epfd
 
 import (
 	"errors"
@@ -117,7 +117,7 @@ func (epfd *EventuallyPerfectFailureDetector) handleEpfdTimeout() {
 	StartTimer(epfd, epfd.delay)
 }
 
-func (epfd *EventuallyPerfectFailureDetector) handlePerfectLinkLayerPlDeliver(message *protobuf.Message) *protobuf.Message {
+func (epfd *EventuallyPerfectFailureDetector) handlePerfectLinkLayerPlDeliver() *protobuf.Message {
 	return &protobuf.Message{
 		Type:              protobuf.Message_PL_SEND,
 		FromAbstractionId: epfd.abstraction_id,
@@ -142,11 +142,11 @@ func (epfd *EventuallyPerfectFailureDetector) HandleMessage(message *protobuf.Me
 	case protobuf.Message_PL_DELIVER:
 		switch message.PlDeliver.Message.Type {
 		case protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST:
-			epfd.messages_queue <- epfd.handlePerfectLinkLayerPlDeliver(message)
+			epfd.messages_queue <- epfd.handlePerfectLinkLayerPlDeliver()
 		case protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REPLY:
 			epfd.alive_processes[helpers.GetProcessName(message.PlDeliver.Sender)] = message.PlDeliver.Sender
 		default:
-			return errors.New("Message not supported")
+			return errors.New("message not supported")
 		}
 	default:
 		return errors.New("invalid message: message is not supported for EPFD")
