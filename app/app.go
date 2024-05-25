@@ -132,9 +132,9 @@ func (app *App) handleNnarLayerReadReturn(message *protobuf.Message) *protobuf.M
 }
 
 func (app *App) HandleMessage(message *protobuf.Message) error {
-	var queued_message *protobuf.Message = nil
 	// fmt.Printf("App handles message:\n%s\n\n", message)
 	dlog.Dlog.Printf("%-35s App handles message:\n'%s'\n\n", "[app]:", message)
+	var queued_message *protobuf.Message = nil
 
 	switch message.Type {
 	case protobuf.Message_PL_DELIVER:
