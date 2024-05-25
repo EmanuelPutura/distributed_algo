@@ -54,7 +54,7 @@ func (beb *BestEffortBroadcast) handleMessagePlDeliver(message *protobuf.Message
 
 func (beb *BestEffortBroadcast) HandleMessage(message *protobuf.Message) error {
 	// fmt.Printf("BEB handles message:\n%s\n\n", message)
-	dlog.Dlog.Printf("BEB handles message:\n%s\n\n", message)
+	dlog.Dlog.Printf("%-35s BEB handles message:\n%s\n\n", "[BEB]:", message)
 
 	switch message.Type {
 	case protobuf.Message_BEB_BROADCAST:

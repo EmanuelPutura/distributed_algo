@@ -1,17 +1,13 @@
-20:29:34.247 INF hub: Listening on 127.0.0.1:5000
-20:29:34.248 INF ref-3: listening on 127.0.0.1:5003
-20:29:34.249 INF ref-1: listening on 127.0.0.1:5001
-20:29:34.249 INF ref-2: listening on 127.0.0.1:5002
-20:29:34.260 INF hub: Received registration from ref-2
-20:29:34.261 INF hub: Received registration from ref-3
-20:29:34.260 INF hub: Received registration from ref-1
-20:29:43.439 INF hub: Received registration from emanuel-1
-20:29:51.375 INF hub: Received registration from emanuel-2
-20:29:57.635 INF hub: Received registration from emanuel-3
-20:30:17.778 INF hub: sys-1/emanuel-1 finished writing x
-20:30:21.209 INF hub: sys-1/emanuel-1 read x=23
-20:30:21.209 INF hub: sys-1/emanuel-2 read x=23
-20:31:58.167 INF ref-1: Stopping ...
-20:31:58.408 INF ref-2: Stopping ...
-20:31:59.409 INF ref-3: Stopping ...
-20:32:00.410 INF hub: Stopping ...
+12:12:52.433 INF hub: Listening on 127.0.0.1:5000
+12:12:52.435 INF ref-3: listening on 127.0.0.1:5003
+12:12:52.435 INF ref-1: listening on 127.0.0.1:5001
+12:12:52.435 INF ref-2: listening on 127.0.0.1:5002
+12:12:52.448 INF hub: Received registration from ref-2
+12:12:52.448 INF hub: Received registration from ref-1
+12:12:52.449 INF hub: Received registration from ref-3
+12:12:58.676 INF hub: Received registration from emanuel-1
+12:14:50.900 INF hub: Received registration from emanuel-1
+12:16:47.212 INF hub: Received registration from emanuel-1
+12:26:15.052 INF hub: Received registration from emanuel-1
+12:28:21.044 INF hub: Received registration from emanuel-1
+12:30:11.191 INF hub: Received registration from emanuel-1

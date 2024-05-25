@@ -1,8 +1,8 @@
 package system
 
 import (
-	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/EmanuelPutura/distributed_algo/abstraction"
@@ -62,14 +62,17 @@ type AbstractionWithName struct {
 	abstraction abstraction.Abstraction
 }
 
-func (system *System) createInitialAbstractions() []AbstractionWithName {
-	var link *perfectlink.PerfectLink = perfectlink.Create(
+func (system *System) createPerfectLink() *perfectlink.PerfectLink {
+	return perfectlink.Create(
 		system.parent_process.Host,
 		system.parent_process.Port,
 		system.hub_ip,
 		system.hub_port,
 	).SetSystemId(system.id).SetSystemMessagesQueue(system.messages_queue).SetSystemProcesses(system.all_processes)
+}
 
+func (system *System) createInitialAbstractions() []AbstractionWithName {
+	var link *perfectlink.PerfectLink = system.createPerfectLink()
 	abstractions := []AbstractionWithName{
 		{"app", app.Create(system.messages_queue)},
 		{"app.pl", link.Copy().SetParentAbstraction("app")},
@@ -81,13 +84,8 @@ func (system *System) createInitialAbstractions() []AbstractionWithName {
 }
 
 func (system *System) createNnarAbstractions(key string) {
-	pl := perfectlink.Create(
-		system.parent_process.Host,
-		system.parent_process.Port,
-		system.hub_ip,
-		system.hub_port,
-	).SetSystemId(system.id).SetSystemMessagesQueue(system.messages_queue).SetSystemProcesses(system.all_processes)
-	nnar_base_id := "app.nnar[" + key + "]"
+	var link *perfectlink.PerfectLink = system.createPerfectLink()
+	nnar_base_id := fmt.Sprintf("app.nnar[%s]", key)
 
 	system.abstractions[nnar_base_id] = nnar.Create(
 		system.messages_queue,
@@ -99,9 +97,17 @@ func (system *System) createNnarAbstractions(key string) {
 		make(map[int32]*protobuf.NnarInternalValue),
 	)
 
-	system.abstractions[nnar_base_id+".pl"] = pl.Copy().SetParentAbstraction(nnar_base_id)
-	system.abstractions[nnar_base_id+".beb"] = beb.Create(nnar_base_id+".beb", system.messages_queue, system.all_processes)
-	system.abstractions[nnar_base_id+".beb.pl"] = pl.Copy().SetParentAbstraction(nnar_base_id + ".beb")
+	beb_id := fmt.Sprintf("%s.beb", nnar_base_id)
+	system.abstractions[fmt.Sprintf("%s.pl", nnar_base_id)] = link.Copy().SetParentAbstraction(nnar_base_id)
+	system.abstractions[beb_id] = beb.Create(beb_id, system.messages_queue, system.all_processes)
+	system.abstractions[fmt.Sprintf("%s.beb.pl", nnar_base_id)] = link.Copy().SetParentAbstraction(beb_id)
+}
+
+func (system *System) createConsensusAbstractions(key string) {
+	// var link *perfectlink.PerfectLink = system.createPerfectLink()
+	// consensus_base_id := fmt.Sprintf("app.uc[%s]", key)
+
+	// TODO: add abstractions
 }
 
 func (system *System) register(abstraction *abstraction.Abstraction, key string) {
@@ -121,26 +127,34 @@ func (system *System) Start() {
 	for {
 		for message := range system.messages_queue {
 			// fmt.Printf("System handles message:\n%s\n\n", message)
-			dlog.Dlog.Printf("System handles message: %s\n\n", message)
+			dlog.Dlog.Printf("%-35s System handles message: %s\n\n", "[system]:", message)
 
 			_, exists := system.abstractions[message.ToAbstractionId]
 
 			if !exists {
+				fmt.Printf("\n\n---------> %s\n\n", message.ToAbstractionId)
+
+				// Create nnar abstractions here because each abstraction is specific to the corresponding nnar register
 				if strings.HasPrefix(message.ToAbstractionId, "app.nnar") {
-					system.createNnarAbstractions(helpers.RetrieveRegisterFromAbstraction((message.ToAbstractionId)))
+					system.createNnarAbstractions(helpers.RetrieveIdFromAbstraction((message.ToAbstractionId)))
+				}
+				if message.Type == protobuf.Message_UC_PROPOSE {
+					system.createConsensusAbstractions(helpers.RetrieveIdFromAbstraction((message.ToAbstractionId)))
 				}
 			}
 
 			abstraction, exists := system.abstractions[message.ToAbstractionId]
 			if !exists {
-				err := errors.New("failed to handle message")
-				fmt.Println(err)
+				err := fmt.Errorf("%-35s Failed to handle message", "[error]:")
+				dlog.Dlog.Println(err)
+				os.Exit(-1)
 			}
 
 			err := abstraction.HandleMessage(message)
 			if err != nil {
-				err := errors.New("failed to handle message")
-				fmt.Println(err)
+				err := fmt.Errorf("%-35s Failed to handle message", "[error]:")
+				dlog.Dlog.Println(err)
+				os.Exit(-1)
 			}
 		}
 	}

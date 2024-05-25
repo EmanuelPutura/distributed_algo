@@ -67,6 +67,15 @@ func (app *App) handlePerfectLinkLayerDeliver(message *protobuf.Message) *protob
 			ToAbstractionId:   fmt.Sprintf("app.nnar[%s]", message.PlDeliver.Message.AppRead.Register),
 			NnarRead:          &protobuf.NnarRead{},
 		}
+	case protobuf.Message_APP_PROPOSE:
+		return &protobuf.Message{
+			Type:              protobuf.Message_UC_PROPOSE,
+			FromAbstractionId: "app",
+			ToAbstractionId:   fmt.Sprintf("app.uc[%s]", message.PlDeliver.Message.AppPropose.Topic),
+			UcPropose: &protobuf.UcPropose{
+				Value: message.PlDeliver.Message.AppPropose.Value,
+			},
+		}
 	}
 
 	return nil
@@ -98,7 +107,7 @@ func (app *App) handleNnarLayerWriteReturn(message *protobuf.Message) *protobuf.
 			Message: &protobuf.Message{
 				Type: protobuf.Message_APP_WRITE_RETURN,
 				AppWriteReturn: &protobuf.AppWriteReturn{
-					Register: helpers.RetrieveRegisterFromAbstraction(message.FromAbstractionId),
+					Register: helpers.RetrieveIdFromAbstraction(message.FromAbstractionId),
 				},
 			},
 		},
@@ -114,7 +123,7 @@ func (app *App) handleNnarLayerReadReturn(message *protobuf.Message) *protobuf.M
 			Message: &protobuf.Message{
 				Type: protobuf.Message_APP_READ_RETURN,
 				AppReadReturn: &protobuf.AppReadReturn{
-					Register: helpers.RetrieveRegisterFromAbstraction(message.FromAbstractionId),
+					Register: helpers.RetrieveIdFromAbstraction(message.FromAbstractionId),
 					Value:    message.NnarReadReturn.Value,
 				},
 			},
@@ -125,7 +134,7 @@ func (app *App) handleNnarLayerReadReturn(message *protobuf.Message) *protobuf.M
 func (app *App) HandleMessage(message *protobuf.Message) error {
 	var queued_message *protobuf.Message = nil
 	// fmt.Printf("App handles message:\n%s\n\n", message)
-	dlog.Dlog.Printf("App handles message:\n'%s'\n\n", message)
+	dlog.Dlog.Printf("%-35s App handles message:\n'%s'\n\n", "[app]:", message)
 
 	switch message.Type {
 	case protobuf.Message_PL_DELIVER:

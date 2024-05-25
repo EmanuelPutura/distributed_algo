@@ -217,7 +217,7 @@ func (nnar *Nnar) handleNnarInternalAckMessage(message *protobuf.Message) *proto
 }
 
 func (nnar *Nnar) HandleMessage(message *protobuf.Message) error {
-	dlog.Dlog.Printf("Nnar handles message:\n'%s'\n\n", message)
+	dlog.Dlog.Printf("%-35s Nnar handles message:\n'%s'\n\n", "[NNAR]:", message)
 	var queued_message *protobuf.Message = nil
 
 	switch message.Type {
