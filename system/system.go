@@ -4,10 +4,15 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/EmanuelPutura/distributed_algo/abstraction"
 	"github.com/EmanuelPutura/distributed_algo/app"
 	"github.com/EmanuelPutura/distributed_algo/beb"
+	"github.com/EmanuelPutura/distributed_algo/consensus/ec"
+	"github.com/EmanuelPutura/distributed_algo/consensus/eld"
+	"github.com/EmanuelPutura/distributed_algo/consensus/epfd"
+	"github.com/EmanuelPutura/distributed_algo/consensus/uc"
 	"github.com/EmanuelPutura/distributed_algo/helpers"
 	dlog "github.com/EmanuelPutura/distributed_algo/log"
 	"github.com/EmanuelPutura/distributed_algo/nnar"
@@ -104,10 +109,50 @@ func (system *System) createNnarAbstractions(key string) {
 }
 
 func (system *System) createConsensusAbstractions(key string) {
-	// var link *perfectlink.PerfectLink = system.createPerfectLink()
-	// consensus_base_id := fmt.Sprintf("app.uc[%s]", key)
+	var link *perfectlink.PerfectLink = system.createPerfectLink()
 
-	// TODO: add abstractions
+	base_abstraction := fmt.Sprintf("app.uc[%s]", key)
+	ec_abstracton := fmt.Sprintf("%s.ec", base_abstraction)
+	ec_beb_abstracton := fmt.Sprintf("%s.beb", ec_abstracton)
+	ec_eld_abstracton := fmt.Sprintf("%s.eld", ec_abstracton)
+	ec_eld_epfd_abstracton := fmt.Sprintf("%s.epfd", ec_eld_abstracton)
+
+	system.abstractions[base_abstraction] = uc.Create(
+		base_abstraction,
+		system.parent_process,
+		system.abstractions,
+		link,
+		system.all_processes,
+		system.messages_queue,
+	)
+
+	system.abstractions[ec_abstracton] = ec.Create(
+		ec_abstracton,
+		base_abstraction,
+		system.parent_process,
+		system.messages_queue,
+		system.all_processes,
+	)
+
+	system.abstractions[ec_eld_abstracton] = eld.Create(
+		ec_eld_abstracton,
+		ec_abstracton,
+		system.messages_queue,
+		system.all_processes,
+	)
+
+	system.abstractions[ec_eld_epfd_abstracton] = epfd.Create(
+		ec_eld_epfd_abstracton,
+		ec_eld_abstracton,
+		system.messages_queue,
+		system.all_processes,
+		100*time.Millisecond,
+	)
+
+	system.abstractions[ec_beb_abstracton] = beb.Create(ec_beb_abstracton, system.messages_queue, system.all_processes)
+	system.abstractions[fmt.Sprintf("%s.pl", ec_abstracton)] = link.Copy().SetParentAbstraction(ec_abstracton)
+	system.abstractions[fmt.Sprintf("%s.pl", ec_beb_abstracton)] = link.Copy().SetParentAbstraction(ec_beb_abstracton)
+	system.abstractions[fmt.Sprintf("%s.pl", ec_eld_epfd_abstracton)] = link.Copy().SetParentAbstraction(ec_eld_epfd_abstracton)
 }
 
 func (system *System) register(abstraction *abstraction.Abstraction, key string) {
@@ -138,6 +183,8 @@ func (system *System) Start() {
 				if strings.HasPrefix(message.ToAbstractionId, "app.nnar") {
 					system.createNnarAbstractions(helpers.RetrieveIdFromAbstraction((message.ToAbstractionId)))
 				}
+
+				// Create UC abstractions
 				if message.Type == protobuf.Message_UC_PROPOSE {
 					system.createConsensusAbstractions(helpers.RetrieveIdFromAbstraction((message.ToAbstractionId)))
 				}
