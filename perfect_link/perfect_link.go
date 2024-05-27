@@ -104,7 +104,12 @@ func (pl *PerfectLink) getReadyToDeliverMessage(message *protobuf.Message, sende
 
 func (pl *PerfectLink) HandleMessage(message *protobuf.Message) error {
 	// fmt.Printf("PL handles message:\n%s\n\n", message)
-	dlog.Dlog.Printf("%-35s PL handles message:\n%s\n\n", "[perfect link]:", message)
+
+	if !(message.Type == protobuf.Message_PL_SEND && message.PlSend.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REPLY) &&
+		!(message.Type == protobuf.Message_PL_SEND && message.PlSend.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST) &&
+		!(message.Type == protobuf.Message_NETWORK_MESSAGE && message.NetworkMessage.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST) {
+		dlog.Dlog.Printf("%-35s PL handles message:\n%s\n\n", "[perfect link]:", message)
+	}
 
 	switch message.Type {
 	case protobuf.Message_NETWORK_MESSAGE:

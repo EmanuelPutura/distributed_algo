@@ -172,7 +172,14 @@ func (system *System) Start() {
 	for {
 		for message := range system.messages_queue {
 			// fmt.Printf("System handles message:\n%s\n\n", message)
-			dlog.Dlog.Printf("%-35s System handles message: %s\n\n", "[system]:", message)
+
+			if message.Type != protobuf.Message_EPFD_TIMEOUT &&
+				!(message.Type == protobuf.Message_PL_SEND && message.PlSend.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REPLY) &&
+				!(message.Type == protobuf.Message_PL_DELIVER && message.PlDeliver.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST) &&
+				!(message.Type == protobuf.Message_NETWORK_MESSAGE && message.NetworkMessage.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST) &&
+				!(message.Type == protobuf.Message_PL_SEND && message.PlSend.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST) {
+				dlog.Dlog.Printf("%-35s System handles message: %s\n\n", "[system]:", message)
+			}
 
 			_, exists := system.abstractions[message.ToAbstractionId]
 
