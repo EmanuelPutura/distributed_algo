@@ -191,7 +191,7 @@ func (ep *EpochConsensus) handleEpAbort() *protobuf.Message {
 }
 
 func (ep *EpochConsensus) HandleMessage(message *protobuf.Message) error {
-	dlog.Dlog.Printf("%-35s EC handles message:\n%s\n\n", "[Epoch Change]:", message)
+	dlog.Dlog.Printf("%-35s EP handles message:\n%s\n\n", "[Epoch Consensus]:", message)
 	var queued_message *protobuf.Message = nil
 
 	switch message.Type {
@@ -204,7 +204,7 @@ func (ep *EpochConsensus) HandleMessage(message *protobuf.Message) error {
 	case protobuf.Message_EP_ABORT:
 		queued_message = ep.handleEpAbort()
 	default:
-		return errors.New("invalid message: message is not supported for EC")
+		return errors.New("invalid message: message is not supported for EP")
 	}
 
 	if queued_message != nil {
