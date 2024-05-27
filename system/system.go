@@ -177,7 +177,7 @@ func (system *System) Start() {
 			_, exists := system.abstractions[message.ToAbstractionId]
 
 			if !exists {
-				fmt.Printf("\n\n---------> %s\n\n", message.ToAbstractionId)
+				fmt.Printf("\n\n=======> %s, %s, %s\n\n", message.Type, message.ToAbstractionId, message.FromAbstractionId)
 
 				// Create nnar abstractions here because each abstraction is specific to the corresponding nnar register
 				if strings.HasPrefix(message.ToAbstractionId, "app.nnar") {
@@ -197,11 +197,12 @@ func (system *System) Start() {
 				os.Exit(-1)
 			}
 
+			// fmt.Printf("\n\n------> message.ToAbstractionId = %s, Abstraction = %s\n\n", message.ToAbstractionId, abstraction)
 			err := abstraction.HandleMessage(message)
 			if err != nil {
-				err := fmt.Errorf("%-35s Failed to handle message", "[error]:")
+				err := fmt.Errorf("%-35s Failed to handle message: %s", "[error]:", err)
 				dlog.Dlog.Println(err)
-				os.Exit(-1)
+				// os.Exit(-1)
 			}
 		}
 	}

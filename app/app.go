@@ -131,6 +131,23 @@ func (app *App) handleNnarLayerReadReturn(message *protobuf.Message) *protobuf.M
 	}
 }
 
+func (app *App) handleUcLayerDecide(message *protobuf.Message) *protobuf.Message {
+	return &protobuf.Message{
+		Type:              protobuf.Message_PL_SEND,
+		FromAbstractionId: "app",
+		ToAbstractionId:   "app.pl",
+		PlSend: &protobuf.PlSend{
+			Message: &protobuf.Message{
+				Type:            protobuf.Message_APP_DECIDE,
+				ToAbstractionId: "app",
+				AppDecide: &protobuf.AppDecide{
+					Value: message.UcDecide.Value,
+				},
+			},
+		},
+	}
+}
+
 func (app *App) HandleMessage(message *protobuf.Message) error {
 	// fmt.Printf("App handles message:\n%s\n\n", message)
 	dlog.Dlog.Printf("%-35s App handles message:\n'%s'\n\n", "[app]:", message)
@@ -145,6 +162,8 @@ func (app *App) HandleMessage(message *protobuf.Message) error {
 		queued_message = app.handleNnarLayerReadReturn(message)
 	case protobuf.Message_NNAR_WRITE_RETURN:
 		queued_message = app.handleNnarLayerWriteReturn(message)
+	case protobuf.Message_UC_DECIDE:
+		queued_message = app.handleUcLayerDecide(message)
 	default:
 		return errors.New("invalid app message type")
 	}

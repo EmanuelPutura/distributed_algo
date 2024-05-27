@@ -68,7 +68,6 @@ func (eld *EventualLeaderDetector) updateLeader() error {
 func (eld *EventualLeaderDetector) HandleMessage(message *protobuf.Message) error {
 	dlog.Dlog.Printf("%-35s ELD handles message:\n%s\n\n", "[ELD]:", message)
 
-	// TODO: need to check this
 	switch message.Type {
 	case protobuf.Message_EPFD_SUSPECT:
 		key := helpers.GetProcessName(message.EpfdSuspect.Process)

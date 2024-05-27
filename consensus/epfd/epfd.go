@@ -134,7 +134,11 @@ func (epfd *EventuallyPerfectFailureDetector) handlePerfectLinkLayerPlDeliver() 
 }
 
 func (epfd *EventuallyPerfectFailureDetector) HandleMessage(message *protobuf.Message) error {
-	dlog.Dlog.Printf("%-35s EPFD handles message:\n%s\n\n", "[EPFD]:", message)
+	if !(message.Type == protobuf.Message_PL_DELIVER &&
+		(message.PlDeliver.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REQUEST ||
+			message.PlDeliver.Message.Type == protobuf.Message_EPFD_INTERNAL_HEARTBEAT_REPLY)) {
+		dlog.Dlog.Printf("%-35s EPFD handles message:\n%s\n\n", "[EPFD]:", message)
+	}
 
 	switch message.Type {
 	case protobuf.Message_EPFD_TIMEOUT:

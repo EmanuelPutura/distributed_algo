@@ -2,7 +2,6 @@ package uc
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/EmanuelPutura/distributed_algo/abstraction"
 	"github.com/EmanuelPutura/distributed_algo/consensus/ep"
@@ -66,7 +65,7 @@ func (uc *UniformConsensus) updateLeader() *protobuf.Message {
 		return &protobuf.Message{
 			Type:              protobuf.Message_EP_PROPOSE,
 			FromAbstractionId: uc.abstraction_id,
-			ToAbstractionId:   fmt.Sprintf("%s%s", uc.abstraction_id, uc.getId()),
+			ToAbstractionId:   uc.getId(),
 			EpPropose: &protobuf.EpPropose{
 				Value: uc.value,
 			},
@@ -89,7 +88,7 @@ func (uc *UniformConsensus) handleEcStartEpoch(message *protobuf.Message) *proto
 	return &protobuf.Message{
 		Type:              protobuf.Message_EP_ABORT,
 		FromAbstractionId: uc.abstraction_id,
-		ToAbstractionId:   fmt.Sprintf("%s%s", uc.abstraction_id, uc.getId()),
+		ToAbstractionId:   uc.getId(),
 		EpAbort:           &protobuf.EpAbort{},
 	}
 }
